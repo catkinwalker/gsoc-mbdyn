@@ -1,0 +1,197 @@
+# 3D Cartesian robot.mbd
+
+#-----------------------------------------------------------------------------
+# [Data Block]
+
+begin: data;
+   problem: initial value;
+end: data;
+
+#-----------------------------------------------------------------------------
+# [<Problem> Block]
+
+begin: initial value;
+   initial time:   0.;
+   final time:     5.;
+   time step:      1.e-2;
+   max iterations: 10;
+   tolerance:      1.e-6;
+end: initial value;
+
+#-----------------------------------------------------------------------------
+# [Control Data Block]
+
+begin: control data;
+   structural nodes: 5;
+   rigid bodies:     4;
+   joints:           3;
+   forces:           6;
+end: control data;
+
+#-----------------------------------------------------------------------------
+# Design Variables
+set: real Mass_base_x    = 0.5;
+set: real Mass_base_y   = 0.5;
+set: real Mass_base_z   = 0.5;
+set: real Length_base_x  = 4.;
+set: real Length_base_y = -4.;
+set: real Length_base_z  = 4.;
+set: real Offset_Slider = 1.;
+
+#-----------------------------------------------------------------------------
+# Node Labels
+set: integer Node_Ground = 1;
+set: integer Node_base_x  = 2;
+set: integer Node_base_y = 3;
+set: integer Node_base_y_end = 4;
+set: integer Node_base_z = 5;
+
+# Body Labels
+set: integer Body_base_x = 1;
+set: integer Body_base_y = 2;
+set: integer Body_y_end = 3;
+set: integer Body_base_z = 4;
+
+# Joint Labels
+set: integer JoClamp_Ground        = 1;
+set: integer JoClamp_Node_base_x  = 2;
+set: integer JoInlin_Ground_Slider = 3;
+# Force Labels
+set: integer FoStr_Slider = 1;
+set: integer FoStr_y_end  = 2;
+set: integer FoStr_y_end_y  = 3;
+set: integer FoStr_z1 = 4;
+set: integer FoStr_z2 = 5;
+set: integer FoStr_z3 = 6;
+
+#-----------------------------------------------------------------------------
+# [Nodes Block]
+
+begin: nodes;
+
+   #-----------------------------------------------------------------------------
+   # Nodes
+   structural: Node_Ground, static,
+      0., 0., 0., # absolute position
+      eye,        # absolute orientation
+      null,       # absolute velocity
+      null;       # absolute angular velocity
+
+   structural: Node_base_x, dynamic,
+      Length_base_x/2., 0., 0., # absolute position
+      eye,                     # absolute orientation
+      null,                    # absolute velocity
+      null;                    # absolute angular velocity
+
+   structural: Node_base_y, dynamic,
+      Length_base_x/4., 0., Offset_Slider, # absolute position
+      eye,                      # absolute orientation
+      null,                                            # absolute velocity
+      null;                                            # absolute angular velocity
+   structural: Node_base_y_end, dynamic,
+      Length_base_x/4., Length_base_y/2., Offset_Slider, # absolute position
+      eye,                      # absolute orientation
+      null,                     # absolute velocity
+      null;                     # absolute angular velocity
+
+  structural: Node_base_z, dynamic,
+      Length_base_x/4., Length_base_y/2., 0., # absolute position
+      eye,                                          # absolute orientation
+      null,                                         # absolute velocity
+      null;                                         # absolute angular velocity
+
+end: nodes;
+
+#-----------------------------------------------------------------------------
+# [Elements Block]
+
+begin: elements;
+
+   #-----------------------------------------------------------------------------
+   # Bodies
+   body: Body_base_x, Node_base_x,
+      Mass_base_x,              # mass
+      null,                    # relative center of mass
+      eye; # inertia matrix
+
+   body: Body_base_y, Node_base_y,
+      Mass_base_y,              # mass
+      null,         # relative center of mass
+      eye; # inertia matrix
+
+   body: Body_y_end, Node_base_y_end,
+      Mass_base_y, # mass
+      null,        # relative center of mass
+      eye;         # inertia matrix
+   body: Body_base_z, Node_base_z,
+      Mass_base_z,              # mass
+      null,         # relative center of mass
+      eye; # inertia matrix
+
+   #-----------------------------------------------------------------------------
+   # Joints
+   joint: JoClamp_Ground,
+      clamp,
+         Node_Ground,
+            null, # absolute position
+            eye;  # absolute orientation
+
+   joint: JoClamp_Node_base_x,
+      clamp,
+        Node_base_x,
+        4.,0.,0.,
+          eye;
+
+   joint: JoInlin_Ground_Slider,
+      in line,
+         Node_Ground,
+            0., 0., Offset_Slider,         # relative line position
+            1, 0., 0., -1., 3, 1., 0., 0., # relative orientation
+         Node_base_y;
+
+   #-----------------------------------------------------------------------------
+   # Forces
+   force: FoStr_Slider,
+      absolute,
+         Node_base_y,
+            position, null,      # relative arm
+            single, -1, 0, 0,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+   force: FoStr_y_end,
+      absolute,
+        Node_base_y_end,
+            position, null,      # relative arm
+            single, -1, 0, 0,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+   force: FoStr_y_end_y,
+      absolute,
+        Node_base_y_end,
+            position, null,      # relative arm
+            single, 0, -1, 0,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+    force: FoStr_z1,
+      absolute,
+        Node_base_z,
+            position, null,      # relative arm
+            single, -1, 0, 0,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+    force: FoStr_z2,
+      absolute,
+        Node_base_z,
+            position, null,      # relative arm
+            single, 0., -1, 0,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+    force: FoStr_z3,
+      absolute,
+        Node_base_z,
+            position, null,      # relative arm
+            single, 0, 0, -1,
+            cosine, 0., 2.*pi/2., 5., forever, -5.; # force value
+
+
+end: elements;
